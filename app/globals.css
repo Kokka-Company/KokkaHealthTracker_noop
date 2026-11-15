@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/*
+ * Kokka & Company brand tokens.
+ *
+ * The full path is deliberate: postcss resolves on disk and ignores the
+ * package `exports` map, so '@kokka-company/design/tokens.css' would not
+ * resolve here. This defines --kokka-* custom properties on :root.
+ */
+@import "@kokka-company/design/tokens/tokens.css";
+
+/*
+ * Map the brand tokens onto Tailwind's theme. These are var() references
+ * rather than copied hex values, so the package stays the single source of
+ * truth — bumping @kokka-company/design updates the UI with no edits here.
+ *
+ * See BRAND.md for the rules these names carry. The two that bite:
+ *   - brand-light is an accent-on-dark colour (1.76 on white). Never text on white.
+ *   - brand-mid is not a body-text colour (3.60). Body copy is gray-700.
+ */
+@theme {
+  --color-brand-darker: var(--kokka-brand-darker);
+  --color-brand-dark: var(--kokka-brand-dark);
+  --color-brand-mid: var(--kokka-brand-mid);
+  --color-brand-light: var(--kokka-brand-light);
+
+  /* The brand uses the stock Tailwind v3 grey ramp. Pinning the token values
+     keeps us identical to kokkaco.com rather than v4's OKLCH-derived greys. */
+  --color-gray-50: var(--kokka-gray-50);
+  --color-gray-100: var(--kokka-gray-100);
+  --color-gray-200: var(--kokka-gray-200);
+  --color-gray-300: var(--kokka-gray-300);
+  --color-gray-400: var(--kokka-gray-400);
+  --color-gray-500: var(--kokka-gray-500);
+  --color-gray-600: var(--kokka-gray-600);
+  --color-gray-700: var(--kokka-gray-700);
+
+  --color-success: var(--kokka-success);
+  --color-success-bg: var(--kokka-success-bg);
+  --color-error: var(--kokka-error);
+
+  /*
+   * Deliberate extension, not a brand token.
+   *
+   * WHOOP's recovery model is literally red / yellow / green, and the brand
+   * palette has no amber. Dropping the middle band would collapse three
+   * states into two and misreport the data, so we carry one amber and keep
+   * it to large numerals, borders and dots — never small body text.
+   */
+  --color-caution: #d97706;
+
+  --font-sans: var(--kokka-font-sans);
+  --font-mono: var(--kokka-font-mono);
+
+  /*
+   * The token names the family literally ('Playfair Display', Georgia, serif),
+   * but next/font self-hosts it under a generated family name, so the literal
+   * string would not resolve. --font-playfair is that generated name, set on
+   * <html> in layout.tsx; the fallbacks match the token.
+   */
+  --font-serif: var(--font-playfair), Georgia, serif;
+}
+
+/*
+ * No dark mode. Per BRAND.md the brand alternates full-bleed brand-darker
+ * sections against light ones down the page; there is no theme toggle.
+ */
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-700);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Playfair is display only — headings never inherit into body copy. */
+.font-display {
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+
+/*
+ * The signature Kokka detail: a small uppercase brand-mid label at 0.1em
+ * sitting above a Playfair heading. On dark grounds brand-mid drops to 3.83,
+ * so the dark variant uses brand-light instead.
+ */
+.eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--kokka-tracking-widest);
+  color: var(--color-brand-mid);
+}
+
+.eyebrow-on-dark {
+  color: var(--color-brand-light);
+}
+
+/* Brand-consistent focus ring: brand-mid is the interactive colour. */
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand-mid);
+  outline-offset: 2px;
+  border-radius: var(--kokka-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
