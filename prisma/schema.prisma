@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A single person using the dashboard. This app is designed to be
+/// self-hosted, so in practice there is usually exactly one User row —
+/// created the first time somebody connects a provider.
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  displayName String?
+  timezone    String  @default("UTC")
+
+  accounts       ProviderAccount[]
+  dailySnapshots DailySnapshot[]
+}
+
+/// OAuth credentials for one provider ("whoop" | "microsoft").
+/// accessToken and refreshToken are stored encrypted — see lib/crypto.ts.
+model ProviderAccount {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider          String
+  providerAccountId String?
+  scope             String?
+
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, provider])
+  @@index([provider])
+}
+
+/// One cached row per user per calendar day. Lets the dashboard render
+/// instantly and keeps us well inside provider rate limits — a sync
+/// refreshes the row rather than re-fetching on every page view.
+model DailySnapshot {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Calendar day this snapshot describes, as YYYY-MM-DD in the user's timezone.
+  date String
+
+  // --- WHOOP ---------------------------------------------------------------
+  recoveryScore     Int?
+  restingHeartRate  Int?
+  hrvMilli          Float?
+  sleepPerformance  Int?
+  sleepDurationMin  Int?
+  sleepNeedMin      Int?
+  respiratoryRate   Float?
+  dayStrain         Float?
+  averageHeartRate  Int?
+  caloriesKj        Float?
+
+  // --- Calendar ------------------------------------------------------------
+  /// Full event list for the day, serialized as JSON (SQLite has no JSON type).
+  calendarEventsJson String?
+  meetingCount       Int?
+  meetingMinutes     Int?
+  firstEventAt       DateTime?
+  lastEventAt        DateTime?
+
+  // --- Derived -------------------------------------------------------------
+  outlookScore Int?
+  outlookLabel String?
+
+  syncedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
